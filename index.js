@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const app = express();
+const fs = require("fs");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -8,19 +9,29 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  res.render("index");
+  fs.readdir(`./files`, (err, files) => {
+    res.render("index", { files: files });
+  });
 });
-
-app.get("/profile/:username", (req, res) => {
-  const username = req.params.username;
-  console.log(username);
-  res.send(`welcome to ${username} profile`);
+app.post("/create", (req, res) => {
+  fs.writeFile(
+    `./files/${req.body.title.split(" ").join("")}.txt`,
+    req.body.details,
+    (err) => {
+      if (err) {
+        console.log(err);
+      }
+      res.redirect("/");
+    }
+  );
 });
-app.get("/author/:username/:age", (req, res) => {
-  const username = req.params.username;
-  const age = req.params.age;
-  res.send(`welcome to ${username} profile`);
-  console.log(username, age);
+app.get("/file/:filename", (req, res) => {
+  fs.readFile(`./files/${req.params.filename}`, "utf8", (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    res.render("show", { data: data, filename: req.params.filename });
+  });
 });
 
 app.listen(3000, () => {
